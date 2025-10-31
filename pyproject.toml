@@ -1,0 +1,15 @@
+[project]
+name = "library-backend"
+version = "0.1.0"
+description = "Library catalog"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "alembic>=1.17.1",
+    "fastapi>=0.120.4",
+    "pre-commit>=4.3.0",
+    "pydentic>=0.0.1.dev3",
+    "ruff>=0.14.3",
+    "sqlalchemy>=2.0.44",
+    "uvicorn>=0.38.0",
+]
