@@ -9,7 +9,7 @@
 uv sync
 
 # 2) Запустите приложение в dev-режиме
-uv run uvicorn src.main:app --reload
+uv run uvicorn src.library_catalog.main:app --reload
 
 # 3) Откройте в браузере
 # API:    http://127.0.0.1:8000
