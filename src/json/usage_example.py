@@ -1,7 +1,7 @@
 import asyncio
 from pathlib import Path
 
-from src.json_catalog.repository import JSONBookRepository
+from src.json.repository import JSONBookRepository
 from src.library_catalog.enums import AvailabilityEnum
 from src.library_catalog.schemas import BookCreate, BookUpdate
 
