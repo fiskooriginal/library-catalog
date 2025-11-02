@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 
 dependencies = [
+    "aiofiles>=25.1.0",
     "alembic>=1.17.1",
     "asyncpg>=0.30.0",
     "dotenv>=0.9.9",
@@ -56,6 +57,7 @@ ignore = [
     "E501",   # line too long (handled by formatter)
     "B008",   # do not perform function calls in argument defaults (needed for FastAPI Depends)
     "UP007",  # use X | Y for type annotations (compatibility)
+    "RUF001"  # allow cyrillic in print statements
 ]
 
 [tool.ruff.format]

@@ -1,0 +1,24 @@
+[
+  {
+    "uuid": "1fc08686-7e00-4517-a62f-3d9559675f80",
+    "created_at": "2025-11-02T15:50:48.879625",
+    "updated_at": "2025-11-02T15:50:48.879625",
+    "name": "1984",
+    "author": "George Orwell",
+    "year": 1949,
+    "genre": "Dystopian",
+    "pages": 328,
+    "availability": "in_stock"
+  },
+  {
+    "uuid": "7e322af3-0ffc-49aa-93ca-bdd7254c4e5c",
+    "created_at": "2025-11-02T15:50:48.880004",
+    "updated_at": "2025-11-02T15:50:48.880917",
+    "name": "Brave New World",
+    "author": "Aldous Huxley",
+    "year": 1932,
+    "genre": "Dystopian",
+    "pages": 268,
+    "availability": "borrowed"
+  }
+]
