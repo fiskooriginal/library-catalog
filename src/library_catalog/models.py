@@ -1,6 +1,6 @@
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, Enum, Integer, Numeric, String
+from sqlalchemy import DateTime, Enum, Integer, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, declarative_base, mapped_column
 from sqlalchemy.sql import func
 
@@ -24,6 +24,7 @@ class TimestampModel(Base):
 
 class Book(UUIDModel, TimestampModel):
     __tablename__ = "books"
+    __table_args__ = (UniqueConstraint("author", "name", name="uq_books_author_name"),)
 
     name: Mapped[str] = mapped_column(String, nullable=False)
     author: Mapped[str] = mapped_column(String, nullable=False)
