@@ -6,8 +6,8 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-from library_catalog.databases import get_database_url
-from library_catalog.models import Base
+from src.library_catalog.databases import get_database_url
+from src.library_catalog.models import Base
 
 config = context.config
 

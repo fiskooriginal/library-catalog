@@ -33,4 +33,6 @@ class BookUpdate(BookBase):
 
 
 class Book(UUIDSchema, TimestampSchema, BookBase):
-    pass
+    cover_image_url: str | None
+    description: str | None = None
+    rating: float | None = None

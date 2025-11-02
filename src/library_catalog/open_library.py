@@ -1,0 +1,136 @@
+import logging
+from collections.abc import Mapping
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
+from typing import Any
+
+import aiohttp
+
+LOGGER = logging.getLogger(__name__)
+BASE_URL = "https://openlibrary.org"
+COVERS_URL_TEMPLATE = "https://covers.openlibrary.org/b/id/{cover_id}-L.jpg"
+SEARCH_PATH = "/search.json"
+REQUEST_TIMEOUT_SECONDS = 5
+SEARCH_LIMIT = 1
+RATING_QUANT = Decimal("0.01")
+RATING_MIN = Decimal("0.00")
+RATING_MAX = Decimal("9.99")
+
+
+class OpenLibraryClient:
+    async def fetch_book_details(self, title: str, author: str | None = None) -> dict[str, Any] | None:
+        document = await self._search(title, author)
+        if not document:
+            return None
+
+        work_key = document.get("key")
+        work_details = await self._fetch_work_details(work_key) if work_key else None
+
+        cover_image_url = self._extract_cover_url(document, work_details)
+        description = self._extract_description(work_details)
+        rating = self._extract_rating(document, work_details)
+
+        enrichment: dict[str, Any] = {}
+        if cover_image_url:
+            enrichment["cover_image_url"] = cover_image_url
+        if description:
+            enrichment["description"] = description
+        if rating is not None:
+            enrichment["rating"] = rating
+
+        return enrichment or None
+
+    async def _search(self, title: str, author: str | None) -> Mapping[str, Any] | None:
+        params = {"title": title, "limit": str(SEARCH_LIMIT)}
+        if author:
+            params["author"] = author
+
+        data = await self._get_json(SEARCH_PATH, params=params)
+        if not data:
+            return None
+
+        documents = data.get("docs")
+        if not isinstance(documents, list) or not documents:
+            return None
+
+        first_document = documents[0]
+        if not isinstance(first_document, Mapping):
+            return None
+        return first_document
+
+    async def _fetch_work_details(self, work_key: str) -> Mapping[str, Any] | None:
+        normalized_key = work_key.strip("/")
+        if not normalized_key:
+            return None
+
+        path = f"/{normalized_key}"
+        if not normalized_key.endswith(".json"):
+            path = f"{path}.json"
+
+        if not path.startswith("/works/"):
+            path = f"/works/{normalized_key}.json"
+
+        data = await self._get_json(path)
+        if not isinstance(data, Mapping):
+            return None
+        return data
+
+    async def _get_json(self, path: str, params: dict[str, str] | None = None) -> Any:
+        timeout = aiohttp.ClientTimeout(total=REQUEST_TIMEOUT_SECONDS)
+        url = f"{BASE_URL}{path}"
+
+        try:
+            async with aiohttp.ClientSession(timeout=timeout) as session, session.get(url, params=params) as response:
+                response.raise_for_status()
+                return await response.json()
+        except (aiohttp.ClientError, TimeoutError) as exc:
+            LOGGER.warning("Open Library request failed: %s", exc)
+            return None
+
+    def _extract_cover_url(self, document: Mapping[str, Any], work_details: Mapping[str, Any] | None) -> str | None:
+        cover_id = document.get("cover_i")
+        if cover_id is None and work_details:
+            covers = work_details.get("covers")
+            if isinstance(covers, list) and covers:
+                cover_id = covers[0]
+
+        try:
+            cover_id_int = int(cover_id)
+        except (TypeError, ValueError):
+            return None
+
+        return COVERS_URL_TEMPLATE.format(cover_id=cover_id_int)
+
+    def _extract_description(self, work_details: Mapping[str, Any] | None) -> str | None:
+        if not work_details:
+            return None
+
+        description = work_details.get("description")
+        if isinstance(description, str):
+            stripped = description.strip()
+            return stripped or None
+
+        if isinstance(description, Mapping):
+            value = description.get("value")
+            if isinstance(value, str):
+                stripped = value.strip()
+                return stripped or None
+
+        return None
+
+    def _extract_rating(self, document: Mapping[str, Any], work_details: Mapping[str, Any] | None) -> Decimal | None:
+        rating = document.get("ratings_average")
+
+        if rating is None and work_details:
+            rating = work_details.get("ratings_average")
+
+        try:
+            rating_decimal = Decimal(str(rating))
+        except (InvalidOperation, ValueError):
+            return None
+
+        quantized_rating = rating_decimal.quantize(RATING_QUANT, rounding=ROUND_HALF_UP)
+
+        if quantized_rating < RATING_MIN or quantized_rating > RATING_MAX:
+            return None
+
+        return float(quantized_rating)

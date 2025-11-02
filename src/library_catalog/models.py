@@ -1,6 +1,6 @@
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, Enum, Integer, String
+from sqlalchemy import DateTime, Enum, Integer, Numeric, String
 from sqlalchemy.orm import Mapped, declarative_base, mapped_column
 from sqlalchemy.sql import func
 
@@ -33,3 +33,6 @@ class Book(UUIDModel, TimestampModel):
     availability: Mapped[AvailabilityEnum] = mapped_column(
         Enum(AvailabilityEnum), default=AvailabilityEnum.IN_STOCK, nullable=False
     )
+    cover_image_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    description: Mapped[str | None] = mapped_column(String, nullable=True)
+    rating: Mapped[float | None] = mapped_column(Numeric(precision=3, scale=2), nullable=True)
