@@ -6,7 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.library_catalog.databases import get_session
 from src.library_catalog.models import Book
-from src.library_catalog.schemas import BookCreate, BookUpdate, Book as BookSchema
+from src.library_catalog.schemas import Book as BookSchema
+from src.library_catalog.schemas import BookCreate, BookUpdate
 
 router = APIRouter(prefix="/api")
 
