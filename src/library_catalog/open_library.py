@@ -5,15 +5,13 @@ from typing import Any
 
 import aiohttp
 
+from src.library_catalog.api_client import AioHttpClient
+from src.library_catalog.enums import MethodsEnum
+from src.library_catalog.settings import OpenLibrarySettings
+
 LOGGER = logging.getLogger(__name__)
-BASE_URL = "https://openlibrary.org"
-COVERS_URL_TEMPLATE = "https://covers.openlibrary.org/b/id/{cover_id}-L.jpg"
-SEARCH_PATH = "/search.json"
-REQUEST_TIMEOUT_SECONDS = 5
-SEARCH_LIMIT = 1
-RATING_QUANT = Decimal("0.01")
-RATING_MIN = Decimal("0.00")
-RATING_MAX = Decimal("9.99")
+
+settings = OpenLibrarySettings()
 
 
 class OpenLibraryClient:
@@ -40,11 +38,11 @@ class OpenLibraryClient:
         return enrichment or None
 
     async def _search(self, title: str, author: str | None) -> Mapping[str, Any] | None:
-        params = {"title": title, "limit": str(SEARCH_LIMIT)}
+        params = {"title": title, "limit": str(settings.search_limit)}
         if author:
             params["author"] = author
 
-        data = await self._get_json(SEARCH_PATH, params=params)
+        data = await self._get_json(settings.search_path, params=params)
         if not data:
             return None
 
@@ -75,14 +73,22 @@ class OpenLibraryClient:
         return data
 
     async def _get_json(self, path: str, params: dict[str, str] | None = None) -> Any:
-        timeout = aiohttp.ClientTimeout(total=REQUEST_TIMEOUT_SECONDS)
-        url = f"{BASE_URL}{path}"
+        url = f"{settings.base_url}{path}"
+
+        timeout = aiohttp.ClientTimeout(total=settings.request_timeout_seconds)
+        client = AioHttpClient(url, method=MethodsEnum.GET, params=params, timeout=timeout)
 
         try:
-            async with aiohttp.ClientSession(timeout=timeout) as session, session.get(url, params=params) as response:
-                response.raise_for_status()
-                return await response.json()
-        except (aiohttp.ClientError, TimeoutError) as exc:
+            response = await client.send()
+            status_code = response.get("status_code")
+            data = response.get("data")
+
+            if status_code and 200 <= status_code <= 299:
+                return data
+
+            LOGGER.warning("Open Library request failed with status %s: %s", status_code, data)
+            return None
+        except Exception as exc:
             LOGGER.warning("Open Library request failed: %s", exc)
             return None
 
@@ -98,7 +104,7 @@ class OpenLibraryClient:
         except (TypeError, ValueError):
             return None
 
-        return COVERS_URL_TEMPLATE.format(cover_id=cover_id_int)
+        return settings.covers_url_template.format(cover_id=cover_id_int)
 
     def _extract_description(self, work_details: Mapping[str, Any] | None) -> str | None:
         if not work_details:
@@ -128,9 +134,9 @@ class OpenLibraryClient:
         except (InvalidOperation, ValueError):
             return None
 
-        quantized_rating = rating_decimal.quantize(RATING_QUANT, rounding=ROUND_HALF_UP)
+        quantized_rating = rating_decimal.quantize(settings.rating_quant, rounding=ROUND_HALF_UP)
 
-        if quantized_rating < RATING_MIN or quantized_rating > RATING_MAX:
+        if quantized_rating < settings.rating_min or quantized_rating > settings.rating_max:
             return None
 
         return float(quantized_rating)
