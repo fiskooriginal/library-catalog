@@ -1,5 +1,6 @@
 from abc import abstractmethod
-from typing import Protocol, Self, TracebackType
+from types import TracebackType
+from typing import Protocol, Self
 
 
 class UnitOfWorkProtocol(Protocol):

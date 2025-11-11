@@ -12,10 +12,11 @@ class BookMetadata:
     rating: Decimal | None
 
     def __post_init__(self) -> None:
-        if self.rating and (self.rating < RATING_MIN or self.rating > RATING_MAX):
-            raise DomainException(f"Rating must be between {RATING_MIN} and {RATING_MAX}")
-        if self.rating and self.rating.quantize(RATING_STEP) != self.rating:
-            raise DomainException(f"Rating must be a multiple of {RATING_STEP}")
+        if self.rating is not None:
+            if self.rating < RATING_MIN or self.rating > RATING_MAX:
+                raise DomainException(f"Rating must be between {RATING_MIN} and {RATING_MAX}")
+            if self.rating.quantize(RATING_STEP) != self.rating:
+                raise DomainException(f"Rating must be a multiple of {RATING_STEP}")
         if self.cover_image_url and len(self.cover_image_url) > TEXT_MAX_LENGTH:
             raise DomainException(f"Cover image URL must be less than {TEXT_MAX_LENGTH} characters")
         if self.description and len(self.description) > TEXT_MAX_LENGTH:

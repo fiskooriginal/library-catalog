@@ -69,4 +69,7 @@ class UpdateBookUseCase:
                 raise BookNotFoundException(f"Book with uuid={uuid} not found")
             metadata = (await self._metadata_gateway.fetch_metadata(input.name, input.author)) or BookMetadata()
             book = get_updated_domain_book(book, metadata, input)
-            return await self._uow.books.update(uuid, book)
+            result = await self._uow.books.update(uuid, book)
+            if not result:
+                raise BookNotFoundException(f"Book with uuid={uuid} not found")
+            return result

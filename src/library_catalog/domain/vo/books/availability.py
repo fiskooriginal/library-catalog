@@ -9,6 +9,13 @@ class BookAvailabilityEnum(StrEnum):
     IN_STOCK = "in_stock"
     BORROWED = "borrowed"
 
+    def __str__(self):
+        return self.value
+
+    @classmethod
+    def values(cls) -> list[str]:
+        return [availability.value for availability in cls]
+
 
 @dataclass(frozen=True, slots=True)
 class BookAvailability:

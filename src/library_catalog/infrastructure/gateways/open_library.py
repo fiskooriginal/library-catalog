@@ -1,21 +1,31 @@
-import logging
 from collections.abc import Mapping
-from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from typing import Any
 
 import aiohttp
 
-from src.library_catalog.infrastructure.gateways.http.clients.aiohttp import AioHttpClient
-from src.library_catalog.settings import OpenLibrarySettings
+from src.library_catalog.domain.gateways.books.metadata import BookMetadataGatewayProtocol
+from src.library_catalog.domain.vo.books import BookMetadata
+from src.library_catalog.infrastructure.config import OpenLibrarySettings
+from src.library_catalog.infrastructure.gateways.mappers.open_library import map_api_response_to_metadata
+from src.library_catalog.infrastructure.http.clients.aiohttp import AioHttpClient
 
-LOGGER = logging.getLogger(__name__)
 
-settings = OpenLibrarySettings()
+class OpenLibraryGateway(BookMetadataGatewayProtocol):
+    def __init__(self, settings: OpenLibrarySettings | None = None) -> None:
+        self.settings = settings or OpenLibrarySettings()
 
+    async def fetch_metadata(self, name: str, author: str) -> BookMetadata | None:
+        """
+        Получает метаданные книги из Open Library API.
 
-class OpenLibraryClient:
-    async def fetch_book_details(self, title: str, author: str | None = None) -> dict[str, Any] | None:
-        document = await self._search(title, author)
+        Args:
+            name: Название книги
+            author: Автор книги
+
+        Returns:
+            BookMetadata или None если данные не найдены
+        """
+        document = await self._search(name, author)
         if not document:
             return None
 
@@ -34,14 +44,14 @@ class OpenLibraryClient:
         if rating is not None:
             enrichment["rating"] = rating
 
-        return enrichment or None
+        return map_api_response_to_metadata(enrichment)
 
     async def _search(self, title: str, author: str | None) -> Mapping[str, Any] | None:
-        params = {"title": title, "limit": str(settings.search_limit)}
+        params = {"title": title, "limit": str(self.settings.search_limit)}
         if author:
             params["author"] = author
 
-        data = await self._get_json(settings.search_path, params=params)
+        data = await self._get_json(self.settings.search_path, params=params)
         if not data:
             return None
 
@@ -72,22 +82,16 @@ class OpenLibraryClient:
         return data
 
     async def _get_json(self, path: str, params: dict[str, str] | None = None) -> Any:
-        url = f"{settings.base_url}{path}"
+        url = f"{self.settings.base_url}{path}"
 
-        timeout = aiohttp.ClientTimeout(total=settings.request_timeout_seconds)
+        timeout = aiohttp.ClientTimeout(total=self.settings.request_timeout_seconds)
 
-        try:
-            async with AioHttpClient(timeout=timeout) as client:
-                response = await client.get(url, params=params)
+        async with AioHttpClient(timeout=timeout) as client:
+            response = await client.get(url, params=params)
 
-                if response.is_success():
-                    return response.data
-
-                LOGGER.warning("Open Library request failed with status %s: %s", response.status_code, response.data)
+            if not response.is_success():
                 return None
-        except Exception as exc:
-            LOGGER.warning("Open Library request failed: %s", exc)
-            return None
+            return response.data
 
     def _extract_cover_url(self, document: Mapping[str, Any], work_details: Mapping[str, Any] | None) -> str | None:
         cover_id = document.get("cover_i")
@@ -101,7 +105,7 @@ class OpenLibraryClient:
         except (TypeError, ValueError):
             return None
 
-        return settings.covers_url_template.format(cover_id=cover_id_int)
+        return self.settings.covers_url_template.format(cover_id=cover_id_int)
 
     def _extract_description(self, work_details: Mapping[str, Any] | None) -> str | None:
         if not work_details:
@@ -120,20 +124,17 @@ class OpenLibraryClient:
 
         return None
 
-    def _extract_rating(self, document: Mapping[str, Any], work_details: Mapping[str, Any] | None) -> Decimal | None:
+    def _extract_rating(self, document: Mapping[str, Any], work_details: Mapping[str, Any] | None) -> float | None:
         rating = document.get("ratings_average")
 
         if rating is None and work_details:
             rating = work_details.get("ratings_average")
 
+        if rating is None:
+            return None
+
+        # Возвращаем как float, маппер сконвертирует в Decimal
         try:
-            rating_decimal = Decimal(str(rating))
-        except (InvalidOperation, ValueError):
+            return float(rating)
+        except (TypeError, ValueError):
             return None
-
-        quantized_rating = rating_decimal.quantize(settings.rating_quant, rounding=ROUND_HALF_UP)
-
-        if quantized_rating < settings.rating_min or quantized_rating > settings.rating_max:
-            return None
-
-        return float(quantized_rating)

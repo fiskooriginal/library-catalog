@@ -31,11 +31,11 @@ class BookFilters:
         if self.search_mode not in ["icontains", "exact"]:
             raise DomainException("Search mode must be either 'icontains' or 'exact'")
         if self.name and len(self.name) > TEXT_MAX_LENGTH:
-            raise DomainException("Name must be less than 255 characters")
+            raise DomainException(f"Name must be less than {TEXT_MAX_LENGTH} characters")
         if self.author and len(self.author) > TEXT_MAX_LENGTH:
-            raise DomainException("Author must be less than {TEXT_MAX_LENGTH} characters")
+            raise DomainException(f"Author must be less than {TEXT_MAX_LENGTH} characters")
         if self.genre and len(self.genre) > TEXT_MAX_LENGTH:
-            raise DomainException("Genre must be less than {TEXT_MAX_LENGTH} characters")
+            raise DomainException(f"Genre must be less than {TEXT_MAX_LENGTH} characters")
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

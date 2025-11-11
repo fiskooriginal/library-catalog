@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from uuid import UUID
 
 from src.library_catalog.domain.vo.books import BookAvailability, BookFilters, PaginationSpec, SortSpec
 
@@ -15,16 +14,6 @@ class CreateBookInput:
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
-class DeleteBookInput:
-    uuid: UUID
-
-
-@dataclass(frozen=True, slots=True, kw_only=True)
-class GetBookInput:
-    uuid: UUID
-
-
-@dataclass(frozen=True, slots=True, kw_only=True)
 class ListBooksInput:
     filters: BookFilters | None = None
     page: PaginationSpec | None = None
@@ -33,10 +22,9 @@ class ListBooksInput:
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class UpdateBookInput:
-    uuid: UUID
     name: str | None = None
     author: str | None = None
     year: int | None = None
     genre: str | None = None
     pages: int | None = None
-    availability: BookAvailability
+    availability: BookAvailability | None = None
