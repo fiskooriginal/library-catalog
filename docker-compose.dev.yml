@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  app:
+    volumes:
+      - ./src:/app/src
+      - ./.env:/app/.env:ro
+    command: ["uv", "run", "uvicorn", "src.library_catalog.presentation.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    environment:
+      - PYTHONUNBUFFERED=1
+

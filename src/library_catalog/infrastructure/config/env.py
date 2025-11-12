@@ -5,17 +5,19 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent.parent
-load_dotenv(BASE_DIR / ".env")
+# Load .env file - environment variables from docker-compose take precedence
+# because they are set before this module is loaded
+load_dotenv(BASE_DIR / ".env", override=False)
 
 # DEFAULT VALUES FOR DEVELOPMENT PURPOSES ONLY
 # DO NOT USE IN PRODUCTION
 
 # database
-DB_HOST = getenv("DB_HOST", "localhost")
-DB_PORT = getenv("DB_PORT", "5432")
-DB_NAME = getenv("DB_NAME", "library_catalog")
-DB_USER = getenv("DB_USER", "postgres")
-DB_PASSWORD = getenv("DB_PASSWORD", "postgres")
+DB_HOST = getenv("DB_HOST")
+DB_PORT = getenv("DB_PORT")
+DB_NAME = getenv("DB_NAME")
+DB_USER = getenv("DB_USER")
+DB_PASSWORD = getenv("DB_PASSWORD")
 
 # open library
 OPEN_LIBRARY_BASE_URL = getenv("OPEN_LIBRARY_BASE_URL", "https://openlibrary.org")
