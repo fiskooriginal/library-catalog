@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import asyncio
 import json
 from datetime import UTC, datetime
 from pathlib import Path
-from uuid import UUID
+from uuid import UUID  # noqa: TC003
 
 import aiofiles
 
@@ -163,6 +165,6 @@ class BooksRepositoryAiofilesImpl(BookRepositoryProtocol):
                 result = [b for b in result if b.author == filters.author]
 
         if filters.availability:
-            result = [b for b in result if b.availability.value == filters.availability.value]
+            result = [b for b in result if b.availability == filters.availability]
 
         return result

@@ -6,10 +6,6 @@ from src.library_catalog.infrastructure.persistence.repositories.books.jsonbinio
 
 
 class BooksUowJsonbinioImpl(BooksUOW):
-    """
-    JSONBinIO does not support Transactions.
-    """
-
     def __init__(self, api_key: str, bin_id: str | None = None):
         self._api_key = api_key
         self._bin_id = bin_id

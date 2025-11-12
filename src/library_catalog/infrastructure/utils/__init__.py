@@ -1,7 +1,7 @@
-from .decimal import decimal_to_numeric, float_to_decimal, numeric_to_decimal
+from .decimal import to_decimal, to_float, to_int
 
 __all__ = [
-    "decimal_to_numeric",
-    "float_to_decimal",
-    "numeric_to_decimal",
+    "to_decimal",
+    "to_float",
+    "to_int",
 ]

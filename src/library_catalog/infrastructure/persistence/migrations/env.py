@@ -6,6 +6,7 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+import src.library_catalog.infrastructure.persistence.models  # noqa: F401
 from src.library_catalog.infrastructure.config.settings import DatabaseSettings
 from src.library_catalog.infrastructure.persistence.models.base import BaseModel
 

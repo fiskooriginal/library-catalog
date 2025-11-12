@@ -20,7 +20,7 @@ class CreateBookUseCase:
                 raise BookAlreadyExistsException(
                     f"Book with author {input.author} and name {input.name} already exists"
                 )
-            metadata = (await self._metadata_gateway.fetch_metadata(input.name, input.author)) or BookMetadata()
+            metadata = await self._metadata_gateway.fetch_metadata(input.name, input.author) or BookMetadata()
             book = create_domain_book(input, metadata)
             return await self._uow.books.create(book)
 
@@ -67,7 +67,11 @@ class UpdateBookUseCase:
             book = await self._uow.books.get(uuid)
             if not book:
                 raise BookNotFoundException(f"Book with uuid={uuid} not found")
-            metadata = (await self._metadata_gateway.fetch_metadata(input.name, input.author)) or BookMetadata()
+
+            metadata = (
+                await self._metadata_gateway.fetch_metadata(input.name or book.name, input.author or book.author)
+            ) or BookMetadata()
+
             book = get_updated_domain_book(book, metadata, input)
             result = await self._uow.books.update(uuid, book)
             if not result:

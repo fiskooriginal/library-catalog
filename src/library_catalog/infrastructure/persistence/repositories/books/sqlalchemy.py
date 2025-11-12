@@ -120,7 +120,9 @@ class BooksRepositorySqlAlchemyImpl(BookRepositoryProtocol):
                 else self.model.genre == filters.genre
             )
         if filters.availability:
-            stmt = stmt.where(self.model.availability == filters.availability.value)
+            stmt = stmt.where(self.model.availability == str(filters.availability))
+        if filters.year is not None:
+            stmt = stmt.where(self.model.year == filters.year)
         if filters.year_from is not None:
             stmt = stmt.where(self.model.year >= filters.year_from)
         if filters.year_to is not None:

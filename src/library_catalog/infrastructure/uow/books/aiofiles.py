@@ -7,10 +7,6 @@ from src.library_catalog.infrastructure.persistence.repositories.books.aiofiles 
 
 
 class BooksUowAiofilesImpl(BooksUOW):
-    """
-    Aiofiles does not support Transactions.
-    """
-
     def __init__(self, file_path: Path | str):
         self._file_path = Path(file_path)
 

@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Self
 
 from src.library_catalog.domain.exceptions import DomainException
 
@@ -10,7 +9,8 @@ class BookAvailabilityEnum(StrEnum):
     BORROWED = "borrowed"
 
     def __str__(self):
-        return self.value
+        result = str(self.value)
+        return result
 
     @classmethod
     def values(cls) -> list[str]:
@@ -19,14 +19,21 @@ class BookAvailabilityEnum(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class BookAvailability:
-    value: BookAvailabilityEnum
+    value: BookAvailabilityEnum | str
 
     def __post_init__(self) -> None:
-        if not isinstance(self.value, BookAvailabilityEnum):
+        if isinstance(self.value, str):
+            try:
+                enum_value = BookAvailabilityEnum(self.value)
+            except ValueError as err:
+                raise DomainException(
+                    f"Invalid availability value: {self.value}. Expected one of: {BookAvailabilityEnum.values()}."
+                ) from err
+            object.__setattr__(self, "value", enum_value)
+        elif not isinstance(self.value, BookAvailabilityEnum):
             raise DomainException(
                 f"Invalid availability value: {self.value}. Expected one of: {BookAvailabilityEnum.values()}."
             )
 
-    @classmethod
-    def from_str(cls, value: str) -> Self:
-        return cls(BookAvailabilityEnum(value))
+    def __str__(self) -> str:
+        return str(self.value)

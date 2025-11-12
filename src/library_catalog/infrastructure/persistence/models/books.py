@@ -1,5 +1,3 @@
-from decimal import Decimal
-
 from sqlalchemy import Enum, Integer, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -21,4 +19,4 @@ class BookModel(UUIDModel, TimestampModel):
     )
     cover_image_url: Mapped[str | None] = mapped_column(String, nullable=True)
     description: Mapped[str | None] = mapped_column(String, nullable=True)
-    rating: Mapped[Decimal | None] = mapped_column(Numeric(precision=3, scale=2), nullable=True)
+    rating: Mapped[Numeric | None] = mapped_column(Numeric(precision=3, scale=2), nullable=True)

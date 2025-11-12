@@ -5,17 +5,10 @@ from src.library_catalog.infrastructure.http.response import HttpResponse
 
 
 class HttpClientProtocol(Protocol):
-    """Protocol for HTTP client implementations with support for all HTTP methods."""
-
     @abstractmethod
     async def get(
-        self,
-        url: str,
-        params: dict[str, Any] | None = None,
-        headers: dict[str, str] | None = None,
-    ) -> HttpResponse:
-        """Send GET request."""
-        ...
+        self, url: str, params: dict[str, Any] | None = None, headers: dict[str, str] | None = None
+    ) -> HttpResponse: ...
 
     @abstractmethod
     async def post(
@@ -24,9 +17,7 @@ class HttpClientProtocol(Protocol):
         data: dict[str, Any] | None = None,
         params: dict[str, Any] | None = None,
         headers: dict[str, str] | None = None,
-    ) -> HttpResponse:
-        """Send POST request."""
-        ...
+    ) -> HttpResponse: ...
 
     @abstractmethod
     async def put(
@@ -35,9 +26,7 @@ class HttpClientProtocol(Protocol):
         data: dict[str, Any] | None = None,
         params: dict[str, Any] | None = None,
         headers: dict[str, str] | None = None,
-    ) -> HttpResponse:
-        """Send PUT request."""
-        ...
+    ) -> HttpResponse: ...
 
     @abstractmethod
     async def patch(
@@ -46,9 +35,7 @@ class HttpClientProtocol(Protocol):
         data: dict[str, Any] | None = None,
         params: dict[str, Any] | None = None,
         headers: dict[str, str] | None = None,
-    ) -> HttpResponse:
-        """Send PATCH request."""
-        ...
+    ) -> HttpResponse: ...
 
     @abstractmethod
     async def delete(
@@ -56,9 +43,7 @@ class HttpClientProtocol(Protocol):
         url: str,
         params: dict[str, Any] | None = None,
         headers: dict[str, str] | None = None,
-    ) -> HttpResponse:
-        """Send DELETE request."""
-        ...
+    ) -> HttpResponse: ...
 
     @abstractmethod
     async def head(
@@ -66,9 +51,7 @@ class HttpClientProtocol(Protocol):
         url: str,
         params: dict[str, Any] | None = None,
         headers: dict[str, str] | None = None,
-    ) -> HttpResponse:
-        """Send HEAD request."""
-        ...
+    ) -> HttpResponse: ...
 
     @abstractmethod
     async def options(
@@ -76,16 +59,10 @@ class HttpClientProtocol(Protocol):
         url: str,
         params: dict[str, Any] | None = None,
         headers: dict[str, str] | None = None,
-    ) -> HttpResponse:
-        """Send OPTIONS request."""
-        ...
+    ) -> HttpResponse: ...
 
     @abstractmethod
-    async def __aenter__(self) -> "HttpClientProtocol":
-        """Enter async context manager."""
-        ...
+    async def __aenter__(self) -> "HttpClientProtocol": ...
 
     @abstractmethod
-    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        """Exit async context manager."""
-        ...
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None: ...

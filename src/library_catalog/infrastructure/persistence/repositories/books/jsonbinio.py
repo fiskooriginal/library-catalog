@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import asyncio
 from datetime import UTC, datetime
-from uuid import UUID
+from uuid import UUID  # noqa: TC003
 
 from src.library_catalog.domain.entities.books import BookEntity
 from src.library_catalog.domain.exceptions.books import BookAlreadyExistsException
@@ -176,6 +178,6 @@ class BooksRepositoryJsonbinioImpl(BookRepositoryProtocol):
                 result = [b for b in result if b.author == filters.author]
 
         if filters.availability:
-            result = [b for b in result if b.availability.value == filters.availability.value]
+            result = [b for b in result if b.availability == filters.availability]
 
         return result

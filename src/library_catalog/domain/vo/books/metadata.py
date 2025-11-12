@@ -7,9 +7,9 @@ from src.library_catalog.domain.exceptions import DomainException
 
 @dataclass(frozen=True, slots=True)
 class BookMetadata:
-    cover_image_url: str | None
-    description: str | None
-    rating: Decimal | None
+    cover_image_url: str | None = None
+    description: str | None = None
+    rating: Decimal | None = None
 
     def __post_init__(self) -> None:
         if self.rating is not None:
