@@ -1,3 +1,4 @@
+import logging
 from uuid import UUID
 
 from src.library_catalog.application.dtos.books import CreateBookInput, ListBooksInput, UpdateBookInput
@@ -8,6 +9,8 @@ from src.library_catalog.domain.exceptions.books import BookAlreadyExistsExcepti
 from src.library_catalog.domain.gateways.books import BookMetadataGatewayProtocol
 from src.library_catalog.domain.vo.books import BookMetadata, QueryResult
 
+logger = logging.getLogger(__name__)
+
 
 class CreateBookUseCase:
     def __init__(self, metadata_gateway: BookMetadataGatewayProtocol, uow: BooksUOW) -> None:
@@ -15,14 +18,28 @@ class CreateBookUseCase:
         self._uow = uow
 
     async def execute(self, input: CreateBookInput) -> BookEntity:
+        logger.info("Creating book", extra={"book_author": input.author, "book_name": input.name})
         async with self._uow:
             if await self._uow.books.exists(input.author, input.name):
+                logger.warning(
+                    "Book already exists",
+                    extra={"book_author": input.author, "book_name": input.name},
+                )
                 raise BookAlreadyExistsException(
                     f"Book with author {input.author} and name {input.name} already exists"
                 )
             metadata = await self._metadata_gateway.fetch_metadata(input.name, input.author) or BookMetadata()
             book = create_domain_book(input, metadata)
-            return await self._uow.books.create(book)
+            created_book = await self._uow.books.create(book)
+            logger.info(
+                "Book created successfully",
+                extra={
+                    "book_uuid": str(created_book.uuid),
+                    "book_author": created_book.author,
+                    "book_name": created_book.name,
+                },
+            )
+            return created_book
 
 
 class DeleteBookUseCase:
@@ -30,10 +47,14 @@ class DeleteBookUseCase:
         self._uow = uow
 
     async def execute(self, uuid: UUID) -> bool:
+        logger.info("Deleting book", extra={"book_uuid": str(uuid)})
         async with self._uow:
             if not (await self._uow.books.get(uuid)):
+                logger.warning("Book not found for deletion", extra={"book_uuid": str(uuid)})
                 raise BookNotFoundException(f"Book with UUID {uuid} not found")
-            return await self._uow.books.delete(uuid)
+            result = await self._uow.books.delete(uuid)
+            logger.info("Book deleted successfully", extra={"book_uuid": str(uuid)})
+            return result
 
 
 class GetBookUseCase:
@@ -41,9 +62,11 @@ class GetBookUseCase:
         self._uow = uow
 
     async def execute(self, uuid: UUID) -> BookEntity:
+        logger.debug("Getting book", extra={"book_uuid": str(uuid)})
         async with self._uow:
             book = await self._uow.books.get(uuid)
             if not book:
+                logger.warning("Book not found", extra={"book_uuid": str(uuid)})
                 raise BookNotFoundException(f"Book with UUID {uuid} not found")
             return book
 
@@ -53,8 +76,21 @@ class GetPaginatedBookListUseCase:
         self._uow = uow
 
     async def execute(self, input: ListBooksInput) -> QueryResult[BookEntity]:
+        logger.debug(
+            "Listing books",
+            extra={
+                "offset": input.page.offset if input.page else 0,
+                "limit": input.page.limit if input.page else 0,
+                "has_filters": input.filters is not None,
+            },
+        )
         async with self._uow:
-            return await self._uow.books.list(filters=input.filters, pagination=input.page, sort=input.sort)
+            result = await self._uow.books.list(filters=input.filters, pagination=input.page, sort=input.sort)
+            logger.debug(
+                "Books listed",
+                extra={"count": result.count, "returned": len(result.data)},
+            )
+            return result
 
 
 class UpdateBookUseCase:
@@ -63,9 +99,11 @@ class UpdateBookUseCase:
         self._uow = uow
 
     async def execute(self, uuid: UUID, input: UpdateBookInput) -> BookEntity:
+        logger.info("Updating book", extra={"book_uuid": str(uuid)})
         async with self._uow:
             book = await self._uow.books.get(uuid)
             if not book:
+                logger.warning("Book not found for update", extra={"book_uuid": str(uuid)})
                 raise BookNotFoundException(f"Book with uuid={uuid} not found")
 
             metadata = (
@@ -75,5 +113,14 @@ class UpdateBookUseCase:
             book = get_updated_domain_book(book, metadata, input)
             result = await self._uow.books.update(uuid, book)
             if not result:
+                logger.warning("Book not found after update attempt", extra={"book_uuid": str(uuid)})
                 raise BookNotFoundException(f"Book with uuid={uuid} not found")
+            logger.info(
+                "Book updated successfully",
+                extra={
+                    "book_uuid": str(result.uuid),
+                    "book_author": result.author,
+                    "book_name": result.name,
+                },
+            )
             return result
