@@ -1,3 +1,4 @@
+from fastapi import Request
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from src.library_catalog.infrastructure.config.settings import DatabaseSettings
@@ -7,31 +8,21 @@ from src.library_catalog.infrastructure.persistence.session import (
     make_session_factory,
 )
 
-_engine: AsyncEngine | None = None
-_session_factory: async_sessionmaker[AsyncSession] | None = None
+
+def get_engine(request: Request) -> AsyncEngine:
+    if not hasattr(request.app.state, "engine"):
+        raise RuntimeError("Engine not initialized. Check lifespan configuration.")
+    return request.app.state.engine
 
 
-def get_engine() -> AsyncEngine:
-    global _engine
-    if _engine is None:
-        db_settings = DatabaseSettings()
-        _engine = init_engine(db_settings.url)
-    return _engine
+def get_session_factory(request: Request) -> async_sessionmaker[AsyncSession]:
+    if not hasattr(request.app.state, "session_factory"):
+        raise RuntimeError("Session factory not initialized. Check lifespan configuration.")
+    return request.app.state.session_factory
 
 
-def get_session_factory() -> async_sessionmaker[AsyncSession]:
-    global _session_factory
-    if _session_factory is None:
-        bound_engine = get_engine()
-        _session_factory = make_session_factory(bound_engine)
-    return _session_factory
-
-
-async def dispose_db_engine() -> None:
-    global _engine
-    if _engine is not None:
-        await dispose_engine(_engine)
-        _engine = None
+async def dispose_db_engine(engine: AsyncEngine) -> None:
+    await dispose_engine(engine)
 
 
 # Builders for tests/explicit composition
