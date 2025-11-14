@@ -27,10 +27,6 @@ dev = [
 lint = [
     "ruff>=0.14.3",
 ]
-test = [
-    "pytest>=8.4.2",
-    "pytest-asyncio>=1.2.0",
-]
 
 [tool.ruff]
 target-version = "py313"

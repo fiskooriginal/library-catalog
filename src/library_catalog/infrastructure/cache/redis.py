@@ -41,7 +41,7 @@ class RedisCache(CacheProtocol[T]):
             elif not isinstance(value, str):
                 logger.warning(f"Unexpected value type for key {key}: {type(value)}")
                 return None
-
+            logger.debug("Value retrieved from cache", extra={"key": key})
             return self._serializer.deserialize(value)
         except aioredis.ConnectionError as e:
             logger.error(f"Redis connection error while getting key {key}: {e}")
@@ -71,6 +71,9 @@ class RedisCache(CacheProtocol[T]):
                 await self._client.setex(key, ttl, serialized)
             else:
                 await self._client.set(key, serialized)
+            # Log size instead of full value to avoid huge log entries
+            value_size = len(serialized) if isinstance(serialized, str | bytes) else 0
+            logger.debug("Value set in cache", extra={"key": key, "ttl": ttl, "size_bytes": value_size})
         except aioredis.ConnectionError as e:
             logger.error(f"Redis connection error while setting key {key}: {e}")
             raise CacheConnectionError(f"Failed to connect to Redis: {e}") from e
@@ -92,6 +95,7 @@ class RedisCache(CacheProtocol[T]):
         """
         try:
             await self._client.delete(key)
+            logger.debug("Value deleted from cache", extra={"key": key})
         except aioredis.ConnectionError as e:
             logger.error(f"Redis connection error while deleting key {key}: {e}")
             raise CacheConnectionError(f"Failed to connect to Redis: {e}") from e
@@ -114,6 +118,7 @@ class RedisCache(CacheProtocol[T]):
         """
         try:
             result = await self._client.exists(key)
+            logger.debug("Key checked in cache", extra={"key": key, "exists": result})
             return bool(result)
         except aioredis.ConnectionError as e:
             logger.error(f"Redis connection error while checking key {key}: {e}")
@@ -144,6 +149,7 @@ class RedisCache(CacheProtocol[T]):
                 return 0
 
             deleted = await self._client.delete(*keys)
+            logger.debug("Keys deleted from cache", extra={"pattern": pattern, "deleted": deleted})
             return deleted
         except aioredis.ConnectionError as e:
             logger.error(f"Redis connection error while deleting pattern {pattern}: {e}")

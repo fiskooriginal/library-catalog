@@ -393,25 +393,3 @@ uv run ruff check --fix .
 ```bash
 uv run ruff format .
 ```
-
-## Тестирование
-
-Для запуска тестов:
-
-```bash
-uv run pytest
-```
-
-С покрытием:
-
-```bash
-uv run pytest --cov=src/library_catalog
-```
-
-## Лицензия
-
-[Укажите лицензию проекта]
-
-## Авторы
-
-[Укажите авторов проекта]

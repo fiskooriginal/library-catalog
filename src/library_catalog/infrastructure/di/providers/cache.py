@@ -2,8 +2,8 @@ import redis.asyncio as aioredis
 from fastapi import Request
 
 from src.library_catalog.application.cache.books import BookCacheService
+from src.library_catalog.domain.cache import CacheProtocol
 from src.library_catalog.domain.cache.books import BookCacheServiceProtocol
-from src.library_catalog.domain.gateways.cache import CacheProtocol
 
 
 def get_redis_client(request: Request) -> aioredis.Redis:

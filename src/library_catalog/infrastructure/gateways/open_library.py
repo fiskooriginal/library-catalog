@@ -4,8 +4,8 @@ from typing import Any
 
 import aiohttp
 
+from src.library_catalog.domain.cache import CacheProtocol
 from src.library_catalog.domain.gateways.books.metadata import BookMetadataGatewayProtocol
-from src.library_catalog.domain.gateways.cache import CacheProtocol
 from src.library_catalog.domain.vo.books import BookMetadata
 from src.library_catalog.infrastructure.config import OpenLibrarySettings
 from src.library_catalog.infrastructure.gateways.mappers.open_library import map_api_response_to_metadata
@@ -33,7 +33,7 @@ class OpenLibraryGateway(BookMetadataGatewayProtocol):
         """
         cache_key = self._get_cache_key(name, author)
 
-        async with suppress(Exception):
+        with suppress(Exception):
             cached_data = await self._cache.get(cache_key)
             if cached_data is not None:
                 return map_api_response_to_metadata(cached_data)
@@ -59,7 +59,7 @@ class OpenLibraryGateway(BookMetadataGatewayProtocol):
 
         metadata = map_api_response_to_metadata(enrichment)
 
-        async with suppress(Exception):
+        with suppress(Exception):
             await self._cache.set(cache_key, enrichment, ttl=self.settings.metadata_cache_ttl)
 
         return metadata

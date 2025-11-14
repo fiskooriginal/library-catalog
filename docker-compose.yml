@@ -13,6 +13,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - library-catalog.postgres.network
     volumes:
@@ -23,6 +25,11 @@ services:
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_DB=${REDIS_DB}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_URL=${REDIS_URL}
     healthcheck:
       test: ["CMD-SHELL", "curl -fsSL http://localhost:8000/docs || exit 1"]
       interval: 10s
@@ -42,8 +49,6 @@ services:
         condition: service_healthy
     networks:
       - library-catalog.postgres.network
-    volumes:
-      - ./.env:/app/.env:ro
     environment:
       - DB_HOST=${DB_HOST}
       - DB_PORT=${DB_PORT}
@@ -77,6 +82,45 @@ services:
       retries: 5
       start_period: 10s
 
+  redis:
+    profiles: ["api"]
+    container_name: library-catalog.redis
+    image: "redis:7-alpine"
+    hostname: library-catalog.redis
+    restart: unless-stopped
+    expose:
+      - "6379"
+    ports:
+      - "127.0.0.1:16379:6379"
+    networks:
+      - library-catalog.postgres.network
+    command:
+      - sh
+      - -c
+      - |
+        if [ -n "$$REDIS_PASSWORD" ]; then
+          redis-server --requirepass $$REDIS_PASSWORD --appendonly yes --appendfsync everysec
+        else
+          redis-server --appendonly yes --appendfsync everysec
+        fi
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+    volumes:
+      - library-catalog.redis.data:/data:rw
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - |
+          if [ -n "$$REDIS_PASSWORD" ]; then
+            redis-cli -a $$REDIS_PASSWORD ping | grep PONG
+          else
+            redis-cli ping | grep PONG
+          fi
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   postgres_backup:
     profiles: ["api"]
     container_name: library-catalog.postgres_backup
@@ -98,6 +142,8 @@ services:
 volumes:
   library-catalog.postgres.data:
     name: library-catalog.postgres.data
+  library-catalog.redis.data:
+    name: library-catalog.redis.data
 
 networks:
   library-catalog.postgres.network:
