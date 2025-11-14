@@ -9,6 +9,7 @@ class BooksUowJsonbinioImpl(BooksUOW):
     def __init__(self, api_key: str, bin_id: str | None = None):
         self._api_key = api_key
         self._bin_id = bin_id
+        self._books: BookRepositoryProtocol | None = None
 
     async def __aenter__(self) -> Self:
         self._books = BooksRepositoryJsonbinioImpl(self._api_key, self._bin_id)
@@ -16,7 +17,7 @@ class BooksUowJsonbinioImpl(BooksUOW):
 
     async def __aexit__(self, exc_type, exc_value, traceback):
         # No cleanup needed for API-based storage
-        ...
+        pass
 
     async def commit(self) -> None:
         """Stub: JSONBin.io writes happen immediately, no transaction support."""
@@ -28,4 +29,6 @@ class BooksUowJsonbinioImpl(BooksUOW):
 
     @property
     def books(self) -> BookRepositoryProtocol:
+        if self._books is None:
+            raise RuntimeError("Repository is not initialized. Use 'async with' context manager.")
         return self._books

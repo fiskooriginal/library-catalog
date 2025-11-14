@@ -1,3 +1,3 @@
-from .settings import DatabaseSettings, HttpClientSettings, OpenLibrarySettings
+from .settings import DatabaseSettings, HttpClientSettings, OpenLibrarySettings, RedisSettings
 
-__all__ = ["DatabaseSettings", "HttpClientSettings", "OpenLibrarySettings"]
+__all__ = ["DatabaseSettings", "HttpClientSettings", "OpenLibrarySettings", "RedisSettings"]

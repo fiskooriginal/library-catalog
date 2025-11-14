@@ -19,12 +19,18 @@ from src.library_catalog.infrastructure.config.env import (
     JSONBIN_BIN_ID,
     OPEN_LIBRARY_BASE_URL,
     OPEN_LIBRARY_COVERS_URL_TEMPLATE,
+    OPEN_LIBRARY_METADATA_CACHE_TTL,
     OPEN_LIBRARY_RATING_MAX,
     OPEN_LIBRARY_RATING_MIN,
     OPEN_LIBRARY_RATING_QUANT,
     OPEN_LIBRARY_REQUEST_TIMEOUT_SECONDS,
     OPEN_LIBRARY_SEARCH_LIMIT,
     OPEN_LIBRARY_SEARCH_PATH,
+    REDIS_DB,
+    REDIS_HOST,
+    REDIS_PASSWORD,
+    REDIS_PORT,
+    REDIS_URL,
 )
 
 
@@ -62,6 +68,7 @@ class OpenLibrarySettings:
     rating_quant: Decimal = OPEN_LIBRARY_RATING_QUANT
     rating_min: Decimal = OPEN_LIBRARY_RATING_MIN
     rating_max: Decimal = OPEN_LIBRARY_RATING_MAX
+    metadata_cache_ttl: int = OPEN_LIBRARY_METADATA_CACHE_TTL
 
 
 @dataclass
@@ -73,3 +80,20 @@ class FileStorageSettings:
 class JsonBinSettings:
     api_key: str = JSONBIN_API_KEY
     bin_id: str | None = JSONBIN_BIN_ID
+
+
+@dataclass
+class RedisSettings:
+    host: str = REDIS_HOST
+    port: int = REDIS_PORT
+    db: int = REDIS_DB
+    password: str | None = REDIS_PASSWORD
+    url: str | None = REDIS_URL
+
+    def get_url(self) -> str:
+        """Get Redis connection URL."""
+        if self.url:
+            return self.url
+        if self.password:
+            return f"redis://:{self.password}@{self.host}:{self.port}/{self.db}"
+        return f"redis://{self.host}:{self.port}/{self.db}"

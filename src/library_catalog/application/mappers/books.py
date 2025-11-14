@@ -1,4 +1,5 @@
-from src.library_catalog.application.dtos.books import CreateBookInput, UpdateBookInput
+from src.library_catalog.application.dtos.books import CreateBookInput, ListBooksInput, UpdateBookInput
+from src.library_catalog.domain.cache.books import BookListCacheParams
 from src.library_catalog.domain.entities.books import BookEntity
 from src.library_catalog.domain.vo.books import BookMetadata
 
@@ -28,3 +29,7 @@ def get_updated_domain_book(book: BookEntity, metadata: BookMetadata, input: Upd
         availability=input.availability if input.availability is not None else book.availability,
         metadata=metadata,
     )
+
+
+def to_domain_book_list_cache_params(params: ListBooksInput) -> BookListCacheParams:
+    return BookListCacheParams(filters=params.filters, page=params.page, sort=params.sort)

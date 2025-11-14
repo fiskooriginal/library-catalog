@@ -1,9 +1,11 @@
 from collections.abc import Mapping
+from contextlib import suppress
 from typing import Any
 
 import aiohttp
 
 from src.library_catalog.domain.gateways.books.metadata import BookMetadataGatewayProtocol
+from src.library_catalog.domain.gateways.cache import CacheProtocol
 from src.library_catalog.domain.vo.books import BookMetadata
 from src.library_catalog.infrastructure.config import OpenLibrarySettings
 from src.library_catalog.infrastructure.gateways.mappers.open_library import map_api_response_to_metadata
@@ -11,8 +13,12 @@ from src.library_catalog.infrastructure.http.clients.aiohttp import AioHttpClien
 
 
 class OpenLibraryGateway(BookMetadataGatewayProtocol):
-    def __init__(self, settings: OpenLibrarySettings | None = None) -> None:
-        self.settings = settings or OpenLibrarySettings()
+    def __init__(self, settings: OpenLibrarySettings, cache: CacheProtocol) -> None:
+        self.settings = settings
+        self._cache = cache
+
+    def _get_cache_key(self, name: str, author: str) -> str:
+        return f"metadata:{name}:{author}"
 
     async def fetch_metadata(self, name: str, author: str) -> BookMetadata | None:
         """
@@ -25,6 +31,13 @@ class OpenLibraryGateway(BookMetadataGatewayProtocol):
         Returns:
             BookMetadata или None если данные не найдены
         """
+        cache_key = self._get_cache_key(name, author)
+
+        async with suppress(Exception):
+            cached_data = await self._cache.get(cache_key)
+            if cached_data is not None:
+                return map_api_response_to_metadata(cached_data)
+
         document = await self._search(name, author)
         if not document:
             return None
@@ -44,7 +57,12 @@ class OpenLibraryGateway(BookMetadataGatewayProtocol):
         if rating is not None:
             enrichment["rating"] = rating
 
-        return map_api_response_to_metadata(enrichment)
+        metadata = map_api_response_to_metadata(enrichment)
+
+        async with suppress(Exception):
+            await self._cache.set(cache_key, enrichment, ttl=self.settings.metadata_cache_ttl)
+
+        return metadata
 
     async def _search(self, title: str, author: str | None) -> Mapping[str, Any] | None:
         params = {"title": title, "limit": str(self.settings.search_limit)}
