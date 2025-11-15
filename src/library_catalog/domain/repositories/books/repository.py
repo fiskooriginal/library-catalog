@@ -1,0 +1,19 @@
+from typing import Protocol
+from uuid import UUID
+
+from src.library_catalog.domain.entities.books import BookEntity
+from src.library_catalog.domain.vo.books import BookFilters, PaginationSpec, QueryResult, SortSpec
+
+
+class BookRepositoryProtocol(Protocol):
+    async def create(self, book: BookEntity) -> BookEntity: ...
+    async def get(self, uuid: UUID) -> BookEntity | None: ...
+    async def exists(self, author: str, name: str) -> bool: ...
+    async def update(self, uuid: UUID, book: BookEntity) -> BookEntity | None: ...
+    async def delete(self, uuid: UUID) -> bool: ...
+    async def list(
+        self,
+        filters: BookFilters | None = None,
+        pagination: PaginationSpec | None = None,
+        sort: SortSpec | None = None,
+    ) -> QueryResult[BookEntity]: ...

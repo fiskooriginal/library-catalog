@@ -7,12 +7,12 @@ wheels/
 *.egg-info
 
 # Virtual environments
-.venv
-venv
-.env*
+.venv/
+venv/
+.env
 
 # Ruff
-.ruff_cache
+.ruff_cache/
 
 # Alembic
 alembic.ini
@@ -21,4 +21,8 @@ alembic/versions/
 # PyCharm
 .idea
 
+# VS Code
+.vscode/
+
+# Mac
 .DS_Store
